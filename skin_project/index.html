@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Skin Detector</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+    <h2>AI Skin Disease Detector</h2>
+
+    <input type="file" id="image">
+    <br>
+    <button onclick="upload()">Check</button>
+
+    <div class="loader" id="loader"></div>
+    <h3 id="result"></h3>
+
+    <script>
+        function upload() {
+            let file = document.getElementById("image").files[0];
+
+            if (!file) {
+                document.getElementById("result").innerText = "Please select an image first!";
+                document.getElementById("result").style.color = "red";
+                return;
+            }
+
+            // Show loader
+            document.getElementById("loader").classList.add("show");
+            document.getElementById("result").innerText = "";
+
+            let formData = new FormData();
+            formData.append("image", file);
+
+            fetch("/predict", {
+                method: "POST",
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    // Hide loader
+                    document.getElementById("loader").classList.remove("show");
+
+                    if (data.error) {
+                        document.getElementById("result").innerText = "Error: " + data.error;
+                        document.getElementById("result").style.color = "red";
+                    } else {
+                        document.getElementById("result").innerText =
+                            "Disease: " + data.disease + "\n\n" + data.details;
+                        document.getElementById("result").style.color = "green";
+                    }
+                })
+                .catch(error => {
+                    // Hide loader
+                    document.getElementById("loader").classList.remove("show");
+                    document.getElementById("result").innerText = "Error: " + error.message;
+                    document.getElementById("result").style.color = "red";
+                });
+        }
+    </script>
+
+</body>
+
+</html>
