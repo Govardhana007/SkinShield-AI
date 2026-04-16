@@ -8,7 +8,11 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+# Look for .env in parent directory (root) or current directory
+env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+if not os.path.exists(env_path):
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(env_path)
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -278,5 +282,8 @@ if __name__ == "__main__":
 
     print("=" * 50)
 
-    # Run Flask app
-    app.run(debug=True)
+    # Run Flask app - use environment variables for port/host
+    port = int(os.getenv("PORT", 5000))
+    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
