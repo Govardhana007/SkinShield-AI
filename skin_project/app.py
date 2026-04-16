@@ -5,9 +5,13 @@ from flask_cors import CORS
 import os
 import sys
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize OpenAI client
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__, template_folder=".", static_folder=".", static_url_path="")
 CORS(app)

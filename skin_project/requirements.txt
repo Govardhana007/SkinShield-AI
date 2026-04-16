@@ -3,3 +3,5 @@ Flask-CORS==4.0.0
 Pillow==10.0.0
 numpy==1.24.3
 tensorflow==2.13.0
+python-dotenv==1.0.0
+openai>=1.0.0
