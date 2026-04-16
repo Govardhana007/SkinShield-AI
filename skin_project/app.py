@@ -13,7 +13,8 @@ load_dotenv()
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-app = Flask(__name__, template_folder=".", static_folder=".", static_url_path="")
+app = Flask(__name__, template_folder=".",
+            static_folder=".", static_url_path="")
 CORS(app)
 
 # Model and classes
@@ -59,10 +60,58 @@ def home():
     return render_template('index.html')
 
 
+def simple_skin_analysis(img):
+    """Simple image-based skin analysis without ML model"""
+    try:
+        # Resize to standard size
+        img = img.resize((128, 128))
+        img_array = np.array(img, dtype=np.float32) / 255.0
+        
+        # Extract features
+        # 1. Calculate red channel intensity (acne has more red due to inflammation)
+        if img.mode == 'RGB':
+            r, g, b = img.split()
+            red_intensity = np.mean(np.array(r)) / 255.0
+        else:
+            red_intensity = 0.3
+        
+        # 2. Calculate roughness (variance) - eczema has more texture variation
+        gray = img.convert('L')
+        gray_array = np.array(gray, dtype=np.float32) / 255.0
+        roughness = np.std(gray_array)
+        
+        # 3. Calculate average brightness
+        brightness = np.mean(gray_array)
+        
+        print(f"DEBUG - Red intensity: {red_intensity:.3f}, Roughness: {roughness:.3f}, Brightness: {brightness:.3f}")
+        
+        # Simple decision logic
+        # If high red intensity and moderate brightness -> likely Acne
+        # If high roughness/variance -> likely Eczema  
+        # Otherwise -> Normal
+        
+        acne_score = red_intensity * 0.7 + (1 - brightness) * 0.3
+        eczema_score = roughness * 0.6 + (brightness - 0.3) * 0.2
+        
+        print(f"DEBUG - Acne score: {acne_score:.3f}, Eczema score: {eczema_score:.3f}")
+        
+        if acne_score > 0.45:
+            return "Acne"
+        elif eczema_score > 0.35:
+            return "Eczema"
+        else:
+            return "Normal"
+            
+    except Exception as e:
+        print(f"ERROR in simple_skin_analysis: {e}")
+        return "Normal"
+
+
 def predict(img):
     """Make prediction on image"""
     if model is None:
-        return "Normal"  # Fallback
+        # Use simple image analysis when ML model is not available
+        return simple_skin_analysis(img)
 
     try:
         # Resize to model's expected input size
@@ -95,7 +144,8 @@ def predict(img):
         print(f"ERROR during prediction: {e}")
         import traceback
         traceback.print_exc()
-        return "Normal"
+        # Fallback to simple analysis
+        return simple_skin_analysis(img)
 
 
 def get_disease_info(disease):
@@ -120,7 +170,7 @@ Your skin is in good condition!
    - Drink 8-10 glasses of water daily
    - Keep stress levels low
             """
-        
+
         prompt = f"""
         Give detailed information about {disease} skin disease in simple words.
         Include:
@@ -147,7 +197,7 @@ Your skin is in good condition!
         print(f"ERROR fetching disease info: {str(e)}")
         import traceback
         traceback.print_exc()
-        
+
         # Fallback remedies
         remedies = {
             "Acne": """
@@ -173,7 +223,7 @@ Your skin is healthy! Keep up with basic skincare routine.
 - Apply sunscreen daily
             """
         }
-        
+
         return remedies.get(disease, "Could not fetch detailed info")
 
 
