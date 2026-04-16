@@ -66,7 +66,7 @@ def simple_skin_analysis(img):
         # Resize to standard size
         img = img.resize((128, 128))
         img_array = np.array(img, dtype=np.float32) / 255.0
-        
+
         # Extract features
         # 1. Calculate red channel intensity (acne has more red due to inflammation)
         if img.mode == 'RGB':
@@ -74,34 +74,36 @@ def simple_skin_analysis(img):
             red_intensity = np.mean(np.array(r)) / 255.0
         else:
             red_intensity = 0.3
-        
+
         # 2. Calculate roughness (variance) - eczema has more texture variation
         gray = img.convert('L')
         gray_array = np.array(gray, dtype=np.float32) / 255.0
         roughness = np.std(gray_array)
-        
+
         # 3. Calculate average brightness
         brightness = np.mean(gray_array)
-        
-        print(f"DEBUG - Red intensity: {red_intensity:.3f}, Roughness: {roughness:.3f}, Brightness: {brightness:.3f}")
-        
+
+        print(
+            f"DEBUG - Red intensity: {red_intensity:.3f}, Roughness: {roughness:.3f}, Brightness: {brightness:.3f}")
+
         # Simple decision logic
         # If high red intensity and moderate brightness -> likely Acne
-        # If high roughness/variance -> likely Eczema  
+        # If high roughness/variance -> likely Eczema
         # Otherwise -> Normal
-        
+
         acne_score = red_intensity * 0.7 + (1 - brightness) * 0.3
         eczema_score = roughness * 0.6 + (brightness - 0.3) * 0.2
-        
-        print(f"DEBUG - Acne score: {acne_score:.3f}, Eczema score: {eczema_score:.3f}")
-        
+
+        print(
+            f"DEBUG - Acne score: {acne_score:.3f}, Eczema score: {eczema_score:.3f}")
+
         if acne_score > 0.45:
             return "Acne"
         elif eczema_score > 0.35:
             return "Eczema"
         else:
             return "Normal"
-            
+
     except Exception as e:
         print(f"ERROR in simple_skin_analysis: {e}")
         return "Normal"
