@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, render_template
 from PIL import Image
-import numpy as np
 from flask_cors import CORS
 import os
 import sys
@@ -65,27 +64,34 @@ def home():
 
 
 def simple_skin_analysis(img):
-    """Simple image-based skin analysis without ML model"""
+    """Simple image-based skin analysis without ML model or numpy"""
     try:
         # Resize to standard size
         img = img.resize((128, 128))
-        img_array = np.array(img, dtype=np.float32) / 255.0
 
-        # Extract features
+        # Extract features using pure Python
         # 1. Calculate red channel intensity (acne has more red due to inflammation)
         if img.mode == 'RGB':
             r, g, b = img.split()
-            red_intensity = np.mean(np.array(r)) / 255.0
+            r_pixels = list(r.getdata())
+            red_intensity = sum(r_pixels) / (len(r_pixels) * 255.0)
         else:
             red_intensity = 0.3
 
         # 2. Calculate roughness (variance) - eczema has more texture variation
         gray = img.convert('L')
-        gray_array = np.array(gray, dtype=np.float32) / 255.0
-        roughness = np.std(gray_array)
-
-        # 3. Calculate average brightness
-        brightness = np.mean(gray_array)
+        gray_pixels = list(gray.getdata())
+        
+        # Calculate mean
+        mean_brightness = sum(gray_pixels) / (len(gray_pixels) * 255.0)
+        
+        # Calculate variance/std deviation
+        squared_diffs = [(p/255.0 - mean_brightness) ** 2 for p in gray_pixels]
+        variance = sum(squared_diffs) / len(squared_diffs)
+        roughness = variance ** 0.5  # sqrt for std dev
+        
+        # 3. Calculate average brightness (already calculated above)
+        brightness = mean_brightness
 
         print(
             f"DEBUG - Red intensity: {red_intensity:.3f}, Roughness: {roughness:.3f}, Brightness: {brightness:.3f}")
@@ -117,9 +123,14 @@ def predict(img):
     """Make prediction on image"""
     if model is None:
         # Use simple image analysis when ML model is not available
+        # (This is the normal case when TensorFlow is not installed)
         return simple_skin_analysis(img)
 
     try:
+        # ML model prediction (requires TensorFlow)
+        # This code path only executes if model.h5 is present AND TensorFlow is installed
+        import numpy as np
+        
         # Resize to model's expected input size
         img = img.resize((224, 224))
 
@@ -285,5 +296,5 @@ if __name__ == "__main__":
     # Run Flask app - use environment variables for port/host
     port = int(os.getenv("PORT", 5000))
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
-    
+
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
