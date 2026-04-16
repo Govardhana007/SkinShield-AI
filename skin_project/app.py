@@ -13,8 +13,18 @@ if not os.path.exists(env_path):
     env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(env_path)
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client safely
+client = None
+try:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        client = OpenAI(api_key=api_key)
+        print("✓ OpenAI client initialized")
+    else:
+        print("⚠ OPENAI_API_KEY not set - disease info will use fallback")
+except Exception as e:
+    print(f"⚠ Failed to initialize OpenAI client: {e}")
+    print("  Disease info will use fallback responses")
 
 app = Flask(__name__, template_folder=".",
             static_folder=".", static_url_path="")
@@ -81,15 +91,15 @@ def simple_skin_analysis(img):
         # 2. Calculate roughness (variance) - eczema has more texture variation
         gray = img.convert('L')
         gray_pixels = list(gray.getdata())
-        
+
         # Calculate mean
         mean_brightness = sum(gray_pixels) / (len(gray_pixels) * 255.0)
-        
+
         # Calculate variance/std deviation
         squared_diffs = [(p/255.0 - mean_brightness) ** 2 for p in gray_pixels]
         variance = sum(squared_diffs) / len(squared_diffs)
         roughness = variance ** 0.5  # sqrt for std dev
-        
+
         # 3. Calculate average brightness (already calculated above)
         brightness = mean_brightness
 
@@ -130,7 +140,7 @@ def predict(img):
         # ML model prediction (requires TensorFlow)
         # This code path only executes if model.h5 is present AND TensorFlow is installed
         import numpy as np
-        
+
         # Resize to model's expected input size
         img = img.resize((224, 224))
 
@@ -187,6 +197,12 @@ Your skin is in good condition!
    - Drink 8-10 glasses of water daily
    - Keep stress levels low
             """
+
+        # Check if OpenAI client is available
+        if client is None:
+            print(
+                f"OpenAI client not available, using fallback for {disease}...")
+            raise Exception("OpenAI client not initialized")
 
         prompt = f"""
         Give detailed information about {disease} skin disease in simple words.
