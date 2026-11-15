@@ -1,14 +1,21 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+=======
+<html>
+
+<head>
+>>>>>>> f22723d47a7dee549c36c60e05ecdb891b208a0b
     <title>Skin Detector</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
 <body>
+<<<<<<< HEAD
     <main class="app">
         <h2>AI Skin Disease Detector</h2>
         <p class="subtitle">Upload a clear, well-lit photo of the affected skin.</p>
@@ -170,13 +177,37 @@
 
             if (!file) {
                 showError("Please select an image first!");
+=======
+
+    <h2>AI Skin Disease Detector</h2>
+
+    <input type="file" id="image">
+    <br>
+    <button onclick="upload()">Check</button>
+
+    <div class="loader" id="loader"></div>
+    <h3 id="result"></h3>
+
+    <script>
+        function upload() {
+            let file = document.getElementById("image").files[0];
+
+            if (!file) {
+                document.getElementById("result").innerText = "Please select an image first!";
+                document.getElementById("result").style.color = "red";
+>>>>>>> f22723d47a7dee549c36c60e05ecdb891b208a0b
                 return;
             }
 
             // Show loader
+<<<<<<< HEAD
             loader.classList.add("show");
             resultEl.innerHTML = "";
             btn.disabled = true;
+=======
+            document.getElementById("loader").classList.add("show");
+            document.getElementById("result").innerText = "";
+>>>>>>> f22723d47a7dee549c36c60e05ecdb891b208a0b
 
             let formData = new FormData();
             formData.append("image", file);
@@ -187,6 +218,7 @@
             })
                 .then(res => res.json())
                 .then(data => {
+<<<<<<< HEAD
                     loader.classList.remove("show");
                     btn.disabled = false;
 
@@ -206,3 +238,29 @@
 </body>
 
 </html>
+=======
+                    // Hide loader
+                    document.getElementById("loader").classList.remove("show");
+
+                    if (data.error) {
+                        document.getElementById("result").innerText = "Error: " + data.error;
+                        document.getElementById("result").style.color = "red";
+                    } else {
+                        document.getElementById("result").innerText =
+                            "Disease: " + data.disease + "\n\n" + data.details;
+                        document.getElementById("result").style.color = "green";
+                    }
+                })
+                .catch(error => {
+                    // Hide loader
+                    document.getElementById("loader").classList.remove("show");
+                    document.getElementById("result").innerText = "Error: " + error.message;
+                    document.getElementById("result").style.color = "red";
+                });
+        }
+    </script>
+
+</body>
+
+</html>
+>>>>>>> f22723d47a7dee549c36c60e05ecdb891b208a0b
